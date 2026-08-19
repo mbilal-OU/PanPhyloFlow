@@ -6,13 +6,16 @@ PanPhyloFlow welcomes reproducible bug reports, documentation improvements and s
 
 1. Keep each change focused on one purpose.
 2. Run the Python tests with `pytest -q`.
-3. Run the Nextflow DAG test with `nextflow run main.nf -stub-run --input tests/data/stub_samples.csv --input_type fasta --pangenome panaroo --outdir stub_results`.
-4. Do not change default biological thresholds without explaining the scientific reason and expected effect.
-5. Update documentation when a parameter, output file or interpretation changes.
+3. Run the default Nextflow DAG test with `nextflow run main.nf -stub-run -profile ci --input tests/data/stub_samples.csv --input_type fasta --outdir stub_results`.
+4. If you change engine-specific behavior, test both Roary and Panaroo branches explicitly.
+5. Do not change default biological thresholds without explaining the scientific reason and expected effect.
+6. Update documentation when a parameter, output file or interpretation changes.
 
 ## Scientific changes
 
 Changes involving gene-family clustering, annotation, core definitions, phylogenetic inference or openness modelling should include a primary-method reference or software documentation link and a concise explanation of assumptions.
+
+Roary is the default pangenome engine. Changes that affect the default route should be tested against the same input cohort before and after modification whenever practical.
 
 ## Code style
 

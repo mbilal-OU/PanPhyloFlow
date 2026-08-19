@@ -5,102 +5,46 @@
 [![Docs](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/docs.yml/badge.svg)](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/docs.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**PanPhyloFlow** is a teaching-oriented, reproducible Nextflow workflow for classical microbial gene-family pangenomics and core-genome phylogeny.
+**PanPhyloFlow** is a reproducible, teaching-oriented Nextflow workflow for classical microbial gene-family pangenomics and core-genome phylogenomics.
 
-Its central principle is simple: **the workflow should automate the analysis without hiding the biological decisions that define the result.**
+**Roary is the default pangenome engine.** Panaroo is available as an alternative route for comparison or graph-aware pangenome reconstruction.
 
-Documentation site: `https://mbilal-ou.github.io/PanPhyloFlow/`
+> **Goal:** automate a genome → pangenome → phylogeny analysis without hiding the biological and analytical choices that shape the result.
 
-## Workflow
+<p align="center">
+  <img src="docs/assets/panphyloflow_workflow.svg" alt="PanPhyloFlow workflow" width="100%">
+</p>
 
-```text
-Genome FASTA or compatible GFF3
-        │
-        ├── FASTA → Prokka annotation
-        │
-        ▼
-Panaroo (default) or Roary
-        │
-        ├── gene presence/absence
-        ├── core/accessory statistics
-        ├── gene-frequency spectrum
-        ├── core-prevalence sensitivity
-        └── core-gene alignment
-        │
-        ▼
-IQ-TREE 3
-        │
-        ├── ModelFinder
-        ├── UFBoot
-        └── SH-aLRT
-        │
-        ▼
-Static HTML report + TSVs + figures + Newick tree
-```
+Documentation: **https://mbilal-ou.github.io/PanPhyloFlow/**
 
-For Panaroo, PanPhyloFlow prefers `core_gene_alignment_filtered.aln` for phylogeny when Panaroo produces it, and falls back to `core_gene_alignment.aln` only when the filtered alignment is unavailable.
+---
 
-## Why this project exists
+## Background
 
-PanPhyloFlow is not intended to replace specialist pangenome packages. It connects them into an inspectable learning workflow and makes several choices explicit:
+Microbial pangenome results are not determined by genome sequences alone. Sampling, assembly quality, annotation consistency, gene-family inference, clustering thresholds, core-frequency definitions and phylogenetic choices can all change the apparent architecture of a pangenome.
 
-- annotation consistency;
-- pangenome engine;
-- clustering/family parameters;
-- core prevalence threshold;
-- core alignment used for phylogeny;
-- phylogenetic support settings;
-- cautious interpretation of pangenome size and frequency classes.
+PanPhyloFlow makes those choices visible. It connects established tools into a modular workflow while keeping intermediate files, parameters and interpretations inspectable.
 
-The tutorial in `docs/` explains not only *how* to run the workflow, but *what changes biologically when these analytical choices change*.
+The project is intended for researchers, students and instructors who want a workflow that is both **runnable** and **explainable**.
 
-## Relationship to PanGenFlow
+## Questions PanPhyloFlow helps you ask
 
-[`mbilal-OU/PanGenFlow`](https://github.com/mbilal-OU/PanGenFlow) is kept as a separate upstream project for genome acquisition, deduplication, ANI validation and quality control. PanPhyloFlow starts from analysis-ready genomes or compatible annotations and performs the downstream pangenome-to-phylogeny workflow.
+1. **What is the core and accessory gene content of this genome set?**
+2. **How sensitive are core-gene counts to the prevalence threshold used to define “core”?**
+3. **What evolutionary relationships are recovered from the core-genome alignment?**
+4. **How do Roary and Panaroo compare when applied to the same analysis-ready genomes?**
+5. **Which conclusions are biological observations, and which depend on analysis settings?**
 
-```text
-PanGenFlow (optional upstream preparation)
-        ↓
-analysis-ready microbial genomes
-        ↓
-PanPhyloFlow
-        ↓
-pangenome + phylogeny + report
-```
+## Inputs
 
-## Current v0.1.0 scope
+PanPhyloFlow starts from **analysis-ready microbial genomes or compatible GFF3 annotations**.
 
-- Input: genome FASTA or Prokka-compatible GFF3
-- Annotation: Prokka 1.15.6 for the FASTA route
-- Pangenome: Panaroo 1.8.0 (default) or Roary 3.13.0
-- Alignment: engine-generated core alignment; Panaroo filtered alignment preferred when available
-- Phylogeny: IQ-TREE 3.1.3 with ModelFinder, UFBoot and SH-aLRT
-- Reporting: summary tables, frequency plots, core-threshold sensitivity, descriptive accumulation and static HTML report
-- Execution: Nextflow DSL2 with per-process Conda environments
-- CI: Python unit tests plus a complete Nextflow `-stub-run` DAG test
+| Input mode | Samplesheet columns | What happens |
+|---|---|---|
+| FASTA | `sample,genome` | genomes are annotated with Prokka, then passed to the pangenome engine |
+| GFF3 | `sample,gff` | compatible annotations pass directly to pangenome analysis |
 
-### Why Prokka is still present
-
-Prokka is in maintenance/sunset status and its maintainer recommends Bakta for modern annotation. PanPhyloFlow v0.1.0 retains Prokka because both Panaroo and especially the classical Roary workflow have strong compatibility with Prokka-style GFF3. A Bakta route with explicit compatibility validation is planned rather than silently assuming the formats are interchangeable.
-
-## Quick start
-
-### Requirements
-
-- Java compatible with the selected Nextflow release
-- Nextflow
-- Conda/Miniconda/Miniforge or compatible solver
-
-Check:
-
-```bash
-nextflow -version
-conda --version
-```
-
-### FASTA input
-
-Create `samples.csv`:
+Example FASTA samplesheet:
 
 ```csv
 sample,genome
@@ -109,79 +53,131 @@ Genome_B,/absolute/path/Genome_B.fna
 Genome_C,/absolute/path/Genome_C.fna
 ```
 
-Run:
+For the **default Roary route**, Prokka-style GFF3 is the safest v0.1.0 input format.
+
+## Pipeline overview
+
+PanPhyloFlow is implemented as a modular Nextflow DSL2 workflow. Each major stage has defined inputs, outputs and software environments.
+
+| Stage | Tool / logic | Main output |
+|---|---|---|
+| Annotation | Prokka | standardized GFF3 annotations |
+| Pangenome | **Roary (default)** | gene presence/absence matrix + core alignment |
+| Alternative pangenome | Panaroo | graph-cleaned pangenome + core alignment |
+| Summary | PanPhyloFlow Python utilities | core/accessory statistics, threshold sensitivity, plots |
+| Phylogeny | IQ-TREE 3 | model-selected core-genome tree with support values |
+| Reporting | PanPhyloFlow report builder | HTML report, tables, figures and Newick tree |
+
+For Panaroo analyses, PanPhyloFlow prefers `core_gene_alignment_filtered.aln` for phylogeny when that file is produced; otherwise it falls back to the standard core alignment.
+
+## Repository structure
+
+```text
+PanPhyloFlow/
+├── README.md
+├── CHANGELOG.md
+├── CITATION.cff
+├── CONTRIBUTING.md
+├── LICENSE
+├── ROADMAP.md
+├── SECURITY.md
+├── bin/                         # summary + report utilities
+├── docs/                        # tutorial/documentation site
+│   └── assets/                  # workflow artwork and documentation assets
+├── examples/                    # example samplesheets
+├── modules/local/               # Nextflow process modules
+├── tests/                       # unit + stub-test fixtures
+├── main.nf                      # workflow orchestration
+├── nextflow.config              # defaults, resources and profiles
+└── mkdocs.yml                   # documentation site configuration
+```
+
+## Quick start
+
+### Requirements
+
+- Nextflow
+- Java compatible with your selected Nextflow release
+- Conda, Miniforge, Miniconda or a compatible solver
+
+```bash
+nextflow -version
+conda --version
+```
+
+### Run the default Roary workflow
+
+Because Roary is the default, `--pangenome roary` is optional:
 
 ```bash
 nextflow run main.nf \
   -profile conda \
   --input samples.csv \
   --input_type fasta \
-  --pangenome panaroo \
   --threads 8 \
   --outdir results
 ```
 
-### Pre-annotated GFF input
-
-```csv
-sample,gff
-Genome_A,/absolute/path/Genome_A.gff
-Genome_B,/absolute/path/Genome_B.gff
-Genome_C,/absolute/path/Genome_C.gff
-```
+Equivalent explicit command:
 
 ```bash
 nextflow run main.nf \
   -profile conda \
   --input samples.csv \
-  --input_type gff \
-  --pangenome panaroo \
+  --input_type fasta \
+  --pangenome roary \
+  --roary_identity 95 \
+  --core_threshold 0.95 \
+  --threads 8 \
   --outdir results
 ```
 
-For the Roary route, use Roary-compatible GFF3. Prokka-produced GFF3 is the safest v0.1.0 input.
-
-## Test the workflow logic without bioinformatics software
-
-Every process includes a lightweight stub. This checks channel wiring, branching and expected outputs without running the real tools:
+### Use Panaroo instead
 
 ```bash
 nextflow run main.nf \
-  -stub-run \
-  --input tests/data/stub_samples.csv \
+  -profile conda \
+  --input samples.csv \
   --input_type fasta \
   --pangenome panaroo \
-  --outdir stub_results
+  --panaroo_clean_mode strict \
+  --panaroo_family_threshold 0.70 \
+  --core_threshold 0.95 \
+  --outdir results_panaroo
 ```
 
-The same test is run automatically in GitHub Actions.
+### Resume an interrupted run
 
-## Report output
-
-Every real or stub workflow run generates a self-contained report directory under `05_report/`. The report builder is also tested automatically by the Python test suite. Generated report assets are intentionally not version-controlled.
+```bash
+nextflow run main.nf -resume \
+  -profile conda \
+  --input samples.csv \
+  --input_type fasta \
+  --outdir results
+```
 
 ## Key parameters
 
 | Parameter | Default | Meaning |
 |---|---:|---|
-| `--pangenome` | `panaroo` | `panaroo` or `roary` |
-| `--core_threshold` | `0.95` | Fraction of genomes required for a family to be treated as core |
+| `--pangenome` | `roary` | pangenome engine: `roary` or `panaroo` |
+| `--roary_identity` | `95` | Roary minimum BLASTP percentage identity (`-i`) |
+| `--core_threshold` | `0.95` | fraction of genomes required for a family to be treated as core |
 | `--panaroo_clean_mode` | `strict` | Panaroo graph-cleaning mode |
-| `--panaroo_family_threshold` | `0.70` | Panaroo protein-family identity threshold; not equivalent to Roary `-i` |
-| `--roary_identity` | `95` | Roary minimum BLASTP percentage identity |
-| `--threads` | `4` | CPUs per computational process |
+| `--panaroo_family_threshold` | `0.70` | Panaroo family threshold; **not equivalent** to Roary `-i` |
+| `--threads` | `4` | CPUs requested per computational process |
 | `--ufboot` | `1000` | IQ-TREE ultrafast-bootstrap replicates |
 | `--sh_alrt` | `1000` | IQ-TREE SH-aLRT replicates |
 
-Sample IDs may contain letters, numbers, `.`, `_` and `-`, and must start with a letter or number. Duplicate sample IDs are rejected.
+Panaroo and Roary thresholds are intentionally exposed separately because they belong to different inference strategies and should not be treated as interchangeable settings.
 
-## Results
+## Outputs
 
 ```text
 results/
 ├── 01_annotation/
 ├── 02_pangenome/
-│   └── panaroo/ or roary/
+│   └── roary/ or panaroo/
 ├── 03_summary/
 │   └── summary/
 ├── 04_phylogeny/
@@ -197,37 +193,79 @@ results/
 └── dag.html
 ```
 
-## Scientific guardrails
+The final report is designed to bring the principal statistics, figures and phylogeny into one inspectable output while leaving native Roary/Panaroo files available for downstream analysis.
 
-PanPhyloFlow deliberately does **not** label a pangenome open or closed from a single accumulation trajectory. The default accumulation output is descriptive and uses one seeded genome order. Formal openness modelling should be performed as a separate, explicitly parameterized analysis with appropriate resampling and sampling assumptions.
+## Interpretation guardrails
 
-Likewise, `core_threshold_sensitivity.png` changes only the prevalence definition of a core family. It does not rerun gene-family clustering at different sequence-identity thresholds.
+PanPhyloFlow deliberately avoids several common overinterpretations:
 
-Core-genome phylogeny is also not assumed to represent accessory-gene evolutionary history, and the Roary route does not automatically correct the core alignment for homologous recombination.
+- a single descriptive accumulation trajectory is **not** used to declare a pangenome definitively open or closed;
+- changing `--core_threshold` changes the **prevalence definition of core**, not the underlying gene-family clustering;
+- a core-genome tree is not assumed to represent accessory-gene evolutionary history;
+- accessory presence alone is not automatically interpreted as horizontal gene transfer;
+- Roary and Panaroo results are not expected to be numerically identical because their inference strategies differ.
 
-## Tutorial
+## Validation status
 
-Start at [`docs/index.md`](docs/index.md). The learning path covers:
+**v0.1.0 remains a pre-release.**
 
-1. biological scope;
-2. input genomes and annotation;
-3. pangenome construction;
-4. core/accessory definitions;
-5. core-genome phylogeny;
-6. interpretation and failure modes;
-7. running and resuming the workflow;
-8. how the Nextflow DAG works;
-9. scaling and current limitations.
+Validated so far:
 
-## Development status
+- Python summary/report unit tests pass in GitHub Actions;
+- the complete Nextflow DAG passes stub-mode CI for **both Roary and Panaroo**;
+- the MkDocs documentation site builds and deploys successfully.
 
-**v0.1.0 is a pre-release MVP.** Python analysis/report components are unit-tested and the workflow includes a complete stub-run test. A real end-to-end validation with the pinned Conda bioinformatics stack remains a release gate before declaring the workflow stable.
+Still required before the first stable release:
 
-See [`ROADMAP.md`](ROADMAP.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- real end-to-end execution with a small, taxonomically coherent bacterial genome set using the pinned bioinformatics environments;
+- comparison of generated summary values against native Roary/Panaroo outputs;
+- confirmation of tree/report outputs on real data.
+
+See **[validation/release gate issue #2](https://github.com/mbilal-OU/PanPhyloFlow/issues/2)** and [`docs/10_validation.md`](docs/10_validation.md).
+
+## Test workflow wiring without the bioinformatics stack
+
+```bash
+nextflow run main.nf \
+  -stub-run \
+  -profile ci \
+  --input tests/data/stub_samples.csv \
+  --input_type fasta \
+  --outdir stub_results
+```
+
+Stub mode validates workflow wiring and output contracts. It is **not** a substitute for biological validation.
+
+## Documentation and learning path
+
+The documentation is structured as a tutorial rather than only a command reference:
+
+1. Biological scope
+2. Inputs and annotation
+3. Pangenome construction
+4. Core-threshold definitions
+5. Core-genome phylogeny
+6. Interpretation and failure modes
+7. Running and resuming
+8. Nextflow workflow anatomy
+9. Scaling and current limits
+10. Validation strategy
+
+Start at [`docs/index.md`](docs/index.md) or visit the documentation site.
+
+## Optional companion: PanGenFlow
+
+**PanGenFlow is not required to use PanPhyloFlow.**
+
+If you still need to **download genomes, deduplicate records, perform ANI-based validation, or carry out upstream genome QC**, the separate [PanGenFlow](https://github.com/mbilal-OU/PanGenFlow) project can be used first. PanPhyloFlow itself begins from analysis-ready genomes or annotations.
+
+## Current scope and roadmap
+
+PanPhyloFlow intentionally starts narrow: classical bacterial pangenome analysis, core-genome phylogeny and interpretation. Planned extensions are tracked in [`ROADMAP.md`](ROADMAP.md), including broader annotation support and additional validation/examples.
 
 ## Citation
 
-Citation metadata are provided in [`CITATION.cff`](CITATION.cff). Users should also cite the underlying software actually used in an analysis; see [`REFERENCES.md`](REFERENCES.md).
+Citation metadata are provided in [`CITATION.cff`](CITATION.cff). Users should also cite the underlying software used in their analysis; see [`REFERENCES.md`](REFERENCES.md).
 
 ## License
 

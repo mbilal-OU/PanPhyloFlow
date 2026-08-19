@@ -11,7 +11,7 @@ include { BUILD_REPORT } from './modules/local/build_report'
 params.input              = null
 params.input_type         = 'fasta'       // fasta | gff
 params.outdir             = 'results'
-params.pangenome          = 'panaroo'     // panaroo | roary
+params.pangenome          = 'roary'      // roary | panaroo
 params.threads            = 4
 params.core_threshold     = 0.95
 params.panaroo_clean_mode = 'strict'
