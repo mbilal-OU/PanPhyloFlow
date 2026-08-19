@@ -105,7 +105,7 @@ nextflow -version
 conda --version
 ```
 
-### FASTA input — default Roary route
+### FASTA input: default Roary route
 
 Create `samples.csv`:
 
