@@ -6,3 +6,4 @@ __pycache__/
 .pytest_cache/
 site/
 .DS_Store
+examples/demo_report/
