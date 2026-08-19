@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Made **Roary** the default pangenome engine across code, configuration and documentation.
+- Reframed PanGenFlow as an optional upstream genome-preparation companion rather than a dependency.
+- Added the PanPhyloFlow workflow figure and refreshed README/documentation structure.
+- Added an explicit validation-strategy chapter and stable-release gate.
+
 ## 0.1.0 — pre-release MVP
 
 - Nextflow DSL2 orchestration.
