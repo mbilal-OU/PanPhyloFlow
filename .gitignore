@@ -1,0 +1,8 @@
+.nextflow*
+work/
+results/
+.conda/
+__pycache__/
+.pytest_cache/
+site/
+.DS_Store
