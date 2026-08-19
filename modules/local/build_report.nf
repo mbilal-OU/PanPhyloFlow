@@ -12,7 +12,11 @@ process BUILD_REPORT {
     val core_threshold
 
     output:
-    path 'report/*', emit: report
+    path 'index.html', emit: index
+    path 'figures', emit: figures
+    path '*.tsv', emit: tables
+    path '*.treefile', optional: true, emit: treefile
+    path 'INTERPRETATION_NOTES.txt', emit: notes
 
     script:
     """
@@ -21,13 +25,16 @@ process BUILD_REPORT {
         --tree-dir "${tree_dir}" \
         --engine "${engine}" \
         --core-threshold ${core_threshold} \
-        --outdir report
+        --outdir .
     """
 
     stub:
     """
-    mkdir -p report
-    printf '<!doctype html><html><body><h1>PanPhyloFlow stub report</h1></body></html>\n' > report/index.html
-    cp "${tree_dir}"/*.treefile report/core_genome.treefile 2>/dev/null || true
+    mkdir -p figures
+    printf '<!doctype html><html><body><h1>PanPhyloFlow stub report</h1></body></html>\n' > index.html
+    printf '(Genome_A:0.1,Genome_B:0.1);\n' > core_genome.treefile
+    touch summary.tsv gene_frequency.tsv core_threshold_scan.tsv descriptive_accumulation.tsv
+    touch INTERPRETATION_NOTES.txt
+    touch figures/stub.png
     """
 }
