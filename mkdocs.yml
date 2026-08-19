@@ -1,0 +1,24 @@
+site_name: PanPhyloFlow
+site_description: Learn microbial pangenomics from genomes to core-genome phylogeny
+site_url: https://mbilal-ou.github.io/PanPhyloFlow/
+repo_url: https://github.com/mbilal-OU/PanPhyloFlow
+repo_name: mbilal-OU/PanPhyloFlow
+nav:
+  - Home: index.md
+  - 1. Biological question: 01_concepts.md
+  - 2. Inputs & annotation: 02_inputs_annotation.md
+  - 3. Pangenome construction: 03_pangenome.md
+  - 4. Core thresholds: 04_core_thresholds.md
+  - 5. Phylogeny: 05_phylogeny.md
+  - 6. Interpretation: 06_interpretation.md
+  - 7. Run the workflow: 07_running.md
+  - 8. Nextflow anatomy: 08_nextflow_anatomy.md
+  - 9. Scaling & limits: 09_scaling_and_limits.md
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences

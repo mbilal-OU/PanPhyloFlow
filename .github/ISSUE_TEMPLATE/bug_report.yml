@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a reproducible PanPhyloFlow failure
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: PanPhyloFlow version or commit
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: nextflow
+    attributes:
+      label: Nextflow version
+  - type: input
+    id: system
+    attributes:
+      label: Operating system / execution environment
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log excerpt
+      description: Remove credentials, private paths or sensitive data before posting.
+      render: text

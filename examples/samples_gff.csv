@@ -1,0 +1,4 @@
+sample,gff
+Genome_A,/path/to/Genome_A.gff
+Genome_B,/path/to/Genome_B.gff
+Genome_C,/path/to/Genome_C.gff

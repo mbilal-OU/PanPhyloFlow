@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest a scientifically or technically useful improvement
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What analysis or teaching problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: assumptions
+    attributes:
+      label: Scientific assumptions or references
+      description: For analytical changes, include relevant primary references or tool documentation.
