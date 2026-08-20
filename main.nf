@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
 include { PROKKA } from './modules/local/prokka'
-include { NORMALIZE_GFF } from './modules/local/normalize_gff'
+include { VALIDATE_GFF } from './modules/local/validate_gff'
 include { PANAROO } from './modules/local/panaroo'
 include { ROARY } from './modules/local/roary'
 include { SUMMARIZE_PANGENOME } from './modules/local/summarize_pangenome'
@@ -86,8 +86,8 @@ workflow {
         PROKKA(samples_ch)
         gff_ch = PROKKA.out.annotations.map { sample, gff, gbk, faa, ffn -> gff }
     } else {
-        NORMALIZE_GFF(samples_ch)
-        gff_ch = NORMALIZE_GFF.out.gff
+        VALIDATE_GFF(samples_ch)
+        gff_ch = VALIDATE_GFF.out.gff
     }
 
     gff_list_ch = gff_ch.collect().map { files ->
