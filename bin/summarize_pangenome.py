@@ -114,15 +114,25 @@ def main() -> None:
 
     n_genomes = len(sample_cols)
     n_families = matrix.shape[0]
+    if n_genomes < 1:
+        raise ValueError("Presence/absence matrix contains no genomes")
+    if n_families < 1:
+        raise ValueError("Presence/absence matrix contains no gene families")
+
     isolates_per_family = matrix.sum(axis=1)
     freq = isolates_per_family / n_genomes
 
     configured_core = int((freq >= args.core_threshold).sum())
     accessory = int(n_families - configured_core)
-    persistent_95 = int((freq >= 0.95).sum())
-    shell = int(((freq >= 0.15) & (freq < 0.95)).sum())
-    cloud = int((freq < 0.15).sum())
+    high_frequency = int((freq >= 0.95).sum())
+    intermediate_frequency = int(((freq >= 0.15) & (freq < 0.95)).sum())
+    rare_frequency = int((freq < 0.15).sum())
     singleton = int((isolates_per_family == 1).sum())
+
+    if configured_core + accessory != n_families:
+        raise RuntimeError("Internal count invariant failed: core + accessory != total gene families")
+    if high_frequency + intermediate_frequency + rare_frequency != n_families:
+        raise RuntimeError("Internal count invariant failed: frequency classes do not sum to total gene families")
 
     rows = [
         ("engine", args.engine),
@@ -131,9 +141,9 @@ def main() -> None:
         ("core_threshold", args.core_threshold),
         ("core_gene_families", configured_core),
         ("accessory_gene_families", accessory),
-        ("persistent_ge_95pct", persistent_95),
-        ("shell_15_to_lt95pct", shell),
-        ("cloud_lt15pct", cloud),
+        ("high_frequency_ge_95pct", high_frequency),
+        ("intermediate_frequency_15_to_lt95pct", intermediate_frequency),
+        ("rare_frequency_lt15pct", rare_frequency),
         ("single_isolate_families", singleton),
         ("core_fraction_of_pangenome", configured_core / n_families if n_families else math.nan),
     ]
@@ -155,11 +165,11 @@ def main() -> None:
     scan.to_csv(outdir / "core_threshold_scan.tsv", sep="\t", index=False)
 
     fig, ax = plt.subplots(figsize=(7.2, 4.6))
-    labels = ["Persistent\n≥95%", "Shell\n15–<95%", "Cloud\n<15%"]
-    values = [persistent_95, shell, cloud]
+    labels = ["High frequency\n≥95%", "Intermediate\n15–<95%", "Rare\n<15%"]
+    values = [high_frequency, intermediate_frequency, rare_frequency]
     bars = ax.bar(labels, values)
     ax.set_ylabel("Gene families")
-    ax.set_title("Pangenome frequency classes")
+    ax.set_title("Gene-family frequency classes")
     for bar, value in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width()/2, value, f"{value:,}", ha="center", va="bottom", fontsize=9)
     fig.tight_layout()
@@ -206,7 +216,7 @@ def main() -> None:
             "=================================",
             "",
             "1. 'Core' in summary.tsv means presence in at least the configured --core_threshold fraction of genomes.",
-            "2. Persistent/shell/cloud bins are descriptive frequency classes: >=95%, 15-<95%, and <15%, respectively.",
+            "2. High/intermediate/rare bins are descriptive frequency classes: >=95%, 15-<95%, and <15%, respectively. They are not statistical pangenome partitions.",
             "3. core_threshold_sensitivity.png changes only the prevalence definition of core genes. It does NOT rerun gene clustering at different sequence-identity thresholds.",
             "4. descriptive_accumulation.png uses one seeded random genome order and must not be used alone to infer whether a pangenome is biologically open or closed.",
             "5. Sampling, genome quality, annotation consistency, taxonomic scope, and clustering parameters can all alter pangenome estimates.",

@@ -15,6 +15,7 @@ nav:
   - 8. Nextflow anatomy: 08_nextflow_anatomy.md
   - 9. Scaling & limits: 09_scaling_and_limits.md
   - 10. Validation strategy: 10_validation.md
+  - 11. Publication readiness: 11_publication_readiness.md
 theme:
   name: material
   features:

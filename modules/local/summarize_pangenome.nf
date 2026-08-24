@@ -33,9 +33,9 @@ gene_families	3
 core_threshold	${core_threshold}
 core_gene_families	2
 accessory_gene_families	1
-persistent_ge_95pct	2
-shell_15_to_lt95pct	1
-cloud_lt15pct	0
+high_frequency_ge_95pct	2
+intermediate_frequency_15_to_lt95pct	1
+rare_frequency_lt15pct	0
 single_isolate_families	1
 core_fraction_of_pangenome	0.6667
 TSV
