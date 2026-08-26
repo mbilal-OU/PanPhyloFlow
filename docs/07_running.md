@@ -18,6 +18,10 @@ nextflow run main.nf -resume -profile conda \
   --input_type fasta
 ```
 
+Nextflow can reuse successfully completed tasks from its cache when the same workflow is rerun with `-resume`. Keep the workflow `work/` directory and Nextflow cache metadata available until the analysis is complete; deleting them prevents cached task reuse.
+
+Before resuming, verify that the input samplesheet and analysis parameters still represent the run you intend to continue. Changing inputs or relevant process parameters can cause affected tasks to be recomputed, which is expected and safer than reusing incompatible cached results.
+
 ## Set Roary parameters explicitly
 
 ```bash
