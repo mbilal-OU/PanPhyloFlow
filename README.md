@@ -95,7 +95,7 @@ PanPhyloFlow/
 ### Requirements
 
 - Java compatible with the selected Nextflow release
-- Nextflow
+- Nextflow 24.10.0 or newer
 - Conda/Miniconda/Miniforge or compatible solver
 
 Check:
@@ -104,6 +104,8 @@ Check:
 nextflow -version
 conda --version
 ```
+
+PanPhyloFlow declares `nextflowVersion = '>=24.10.0'` in `nextflow.config`; upgrade Nextflow before running the workflow if the version reported above is older.
 
 ### FASTA input: default Roary route
 
