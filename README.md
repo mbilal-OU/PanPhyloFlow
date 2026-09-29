@@ -11,6 +11,8 @@
 The 0.1.0 pre-release defaulted to the Panaroo engine; the default is now Roary.
 See [CHANGELOG.md](CHANGELOG.md) for what changed between them.
 
+*Maintained by [Muhammad Bilal](https://github.com/mbilal-OU) (Battistuzzi Lab, Oakland University) · mbilal@oakland.edu*
+
 **PanPhyloFlow** is a reproducible, teaching-oriented Nextflow workflow for classical microbial gene-family pangenomics and core-genome phylogenomics.
 
 **Roary is the default pangenome engine.** Panaroo is available as an alternative route for comparison or graph-aware pangenome reconstruction.
@@ -61,7 +63,7 @@ Genome_B,/absolute/path/Genome_B.fna
 Genome_C,/absolute/path/Genome_C.fna
 ```
 
-For the **default Roary route**, Prokka-style GFF3 is the safest v0.1.0 input format.
+For the **default Roary route**, Prokka-style GFF3 remains the safest input format.
 
 ## Pipeline overview
 
@@ -284,6 +286,8 @@ Start with [`docs/index.md`](docs/index.md). The tutorial covers:
 8. Nextflow workflow anatomy;
 9. scaling and current limits;
 10. validation strategy.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report issues and contribute.
 
 ## License
 
