@@ -15,6 +15,7 @@ process PROKKA {
           path("${sample}.gbk"),
           path("${sample}.faa"),
           path("${sample}.ffn"), emit: annotations
+    path 'versions.yml', emit: versions
 
     script:
     """
@@ -29,6 +30,9 @@ process PROKKA {
     cp "prokka_out/${sample}.gbk" "${sample}.gbk"
     cp "prokka_out/${sample}.faa" "${sample}.faa"
     cp "prokka_out/${sample}.ffn" "${sample}.ffn"
+
+    prokka_version=\$(prokka --version 2>/dev/null | head -n 1 || echo "unknown")
+    printf '"PROKKA":\n    prokka: "%s"\n' "\${prokka_version}" > versions.yml
     """
 
     stub:
@@ -37,5 +41,6 @@ process PROKKA {
     printf 'LOCUS       ${sample}\n' > "${sample}.gbk"
     printf '>${sample}_gene1\nMK\n' > "${sample}.faa"
     printf '>${sample}_gene1\nATGAAA\n' > "${sample}.ffn"
+    printf '"PROKKA":\n    prokka: "stub"\n' > versions.yml
     """
 }

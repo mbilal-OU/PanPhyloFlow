@@ -1,0 +1,6 @@
+##gff-version 3
+##sequence-region Genome_B 1 9
+Genome_B	Prokka	CDS	1	9	.	+	0	ID=GENOME_B_00001;Name=dnaA;gene=dnaA;product=chromosomal replication initiator protein DnaA
+##FASTA
+>Genome_B
+ATGAAATAG

@@ -1,7 +1,7 @@
 process PANAROO {
     label 'pangenome'
 
-    conda 'bioconda::panaroo=1.8.0 bioconda::mafft'
+    conda 'bioconda::panaroo=1.8.0 bioconda::mafft=7.*'
 
     publishDir "${params.outdir}/02_pangenome", mode: 'copy', overwrite: true
 
@@ -10,9 +10,12 @@ process PANAROO {
 
     output:
     path 'panaroo', emit: results
+    path 'versions.yml', emit: versions
 
     script:
-    def gff_args = gffs.collect { it.toString() }.join(' ')
+    // Quote each GFF path: sample IDs cannot contain spaces today, but the
+    // engine must not depend on that remaining true forever.
+    def gff_args = gffs.collect { "\"${it.toString()}\"" }.join(' ')
     """
     mkdir -p panaroo
 
@@ -26,6 +29,10 @@ process PANAROO {
         --core_threshold ${params.core_threshold} \
         --family_threshold ${params.panaroo_family_threshold} \
         --threads ${task.cpus}
+
+    panaroo_version=\$(panaroo --version 2>/dev/null | head -n 1 || echo "unknown")
+    mafft_version=\$(mafft --version 2>/dev/null | head -n 1 || echo "unknown")
+    printf '"PANAROO":\n    panaroo: "%s"\n    mafft: "%s"\n' "\${panaroo_version}" "\${mafft_version}" > versions.yml
     """
 
     stub:
@@ -34,5 +41,6 @@ process PANAROO {
     touch panaroo/gene_presence_absence_roary.csv
     touch panaroo/core_gene_alignment.aln
     touch panaroo/core_gene_alignment_filtered.aln
+    printf '"PANAROO":\n    panaroo: "stub"\n    mafft: "stub"\n' > versions.yml
     """
 }

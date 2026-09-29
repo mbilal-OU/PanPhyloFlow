@@ -9,9 +9,14 @@ import math
 import random
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")  # headless-safe: figures must render without a display
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+__version__ = "0.2.0"
 
 METADATA_COLUMNS = {
     "Gene",
@@ -37,6 +42,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--engine", choices=["panaroo", "roary"], required=True)
     p.add_argument("--core-threshold", type=float, default=0.95)
     p.add_argument("--outdir", required=True)
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return p.parse_args()
 
 
@@ -109,8 +115,17 @@ def main() -> None:
         raise ValueError("--core-threshold must be >0 and <=1")
 
     csv_path = locate_presence_absence(input_dir, args.engine)
-    df = pd.read_csv(csv_path, low_memory=False)
+    try:
+        df = pd.read_csv(csv_path, low_memory=False)
+    except pd.errors.EmptyDataError:
+        raise ValueError(f"presence/absence CSV is empty: {csv_path}")
     sample_cols, matrix = presence_matrix(df)
+
+    if matrix.shape[0] == 0:
+        raise ValueError(
+            f"no gene families found in {csv_path}; "
+            "refusing to summarize an empty pangenome"
+        )
 
     n_genomes = len(sample_cols)
     n_families = matrix.shape[0]

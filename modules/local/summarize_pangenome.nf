@@ -1,7 +1,7 @@
 process SUMMARIZE_PANGENOME {
     label 'reporting'
 
-    conda 'conda-forge::python=3.12 conda-forge::pandas conda-forge::numpy conda-forge::matplotlib'
+    conda 'conda-forge::python=3.12 conda-forge::pandas=2.* conda-forge::numpy=1.* conda-forge::matplotlib=3.*'
 
     publishDir "${params.outdir}/03_summary", mode: 'copy', overwrite: true
 
@@ -12,6 +12,7 @@ process SUMMARIZE_PANGENOME {
 
     output:
     path 'summary', emit: summary
+    path 'versions.yml', emit: versions
 
     script:
     """
@@ -20,6 +21,9 @@ process SUMMARIZE_PANGENOME {
         --engine "${engine}" \
         --core-threshold ${core_threshold} \
         --outdir summary
+
+    script_version=\$(python ${projectDir}/bin/summarize_pangenome.py --version 2>/dev/null || echo "unknown")
+    printf '"SUMMARIZE_PANGENOME":\n    summarize_pangenome: "%s"\n' "\${script_version}" > versions.yml
     """
 
     stub:
@@ -47,5 +51,6 @@ TSV
     touch summary/figures/gene_frequency_spectrum.png
     touch summary/figures/core_threshold_sensitivity.png
     touch summary/figures/descriptive_accumulation.png
+    printf '"SUMMARIZE_PANGENOME":\n    summarize_pangenome: "stub"\n' > versions.yml
     """
 }

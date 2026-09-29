@@ -21,7 +21,8 @@ modules/local/
 ├── roary.nf
 ├── summarize_pangenome.nf
 ├── iqtree3.nf
-└── build_report.nf
+├── build_report.nf
+└── record_provenance.nf
 ```
 
 Each module has a narrow responsibility. That makes it possible to inspect or replace one analytical stage without rewriting the entire pipeline.
@@ -42,12 +43,18 @@ channel of GFF files
    │
    ▼
 collect for cohort-level pangenome analysis
+(the GFF list is sorted first: channel collection order follows task
+completion and is nondeterministic, so sorting keeps column order and
+checksums of the presence/absence matrix stable between identical runs)
    │
    ├──> summary
    └──> IQ-TREE
              │
              ▼
           report
+             │
+             ▼
+     provenance record (parameters, tool versions, run metadata)
 ```
 
 This is why workflow managers are useful: the orchestration expresses dependencies, while each process remains a reproducible command-line analysis.

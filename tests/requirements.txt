@@ -1,0 +1,6 @@
+# Pinned Python test dependencies for CI reproducibility.
+# Regenerate deliberately; do not float these in CI.
+pandas==2.2.3
+numpy==1.26.4
+matplotlib==3.8.4
+pytest==8.3.4

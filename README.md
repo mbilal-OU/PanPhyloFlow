@@ -2,8 +2,14 @@
 
 [![Python tests](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/python-tests.yml/badge.svg)](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/python-tests.yml)
 [![Nextflow stub test](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/nextflow-stub.yml/badge.svg)](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/nextflow-stub.yml)
+[![Weekly real-data smoke test](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/real-data-smoke.yml/badge.svg)](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/real-data-smoke.yml)
 [![Docs](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/docs.yml/badge.svg)](https://github.com/mbilal-OU/PanPhyloFlow/actions/workflows/docs.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![version: 0.2.0-unreleased](https://img.shields.io/badge/version-0.2.0--unreleased-blue.svg)](CHANGELOG.md)
+
+**Status:** pre-release. Version 0.2.0 is under development and has not been tagged.
+The 0.1.0 pre-release defaulted to the Panaroo engine; the default is now Roary.
+See [CHANGELOG.md](CHANGELOG.md) for what changed between them.
 
 **PanPhyloFlow** is a reproducible, teaching-oriented Nextflow workflow for classical microbial gene-family pangenomics and core-genome phylogenomics.
 
@@ -162,7 +168,9 @@ nextflow run main.nf \
 
 ## Test the workflow logic without bioinformatics software
 
-Every process includes a lightweight stub. This checks channel wiring, branching and expected outputs without running the real tools:
+Every process includes a lightweight stub. Running with `-stub-run` executes the
+complete DAG with dummy commands, which verifies channel wiring, branching and
+the output contracts of each stage without running the real tools:
 
 ```bash
 nextflow run main.nf \
@@ -173,7 +181,10 @@ nextflow run main.nf \
   --outdir stub_results
 ```
 
-The same wiring is checked automatically in GitHub Actions for both Roary and Panaroo routes.
+GitHub Actions runs the stub DAG for the Roary, Panaroo and GFF-input branches
+and asserts the full output contract: all five result stages plus the
+provenance record, stub summary values, the Newick treefile, and the published
+interpretation notes (see `tests/assert_stub_results.sh`).
 
 ## Results
 
@@ -190,17 +201,29 @@ results/
 │   ├── index.html
 │   ├── figures/
 │   ├── core_genome.treefile
+│   ├── INTERPRETATION_NOTES.txt
 │   └── *.tsv
+├── provenance/
+│   └── provenance.yml
 ├── execution_trace.tsv
 ├── nextflow_report.html
 ├── timeline.html
 └── dag.html
 ```
 
+Every run records machine-readable provenance in `provenance/provenance.yml`:
+pipeline version, Nextflow version, git commit, run/session IDs, the exact
+command line, the effective parameters, and the per-process tool versions. Keep
+this file with any published result so the analysis can be traced to exact
+software.
+
 ## Key parameters
 
 | Parameter | Default | Meaning |
 |---|---:|---|
+| `--input` | *(required)* | Path to the samplesheet CSV |
+| `--input_type` | `fasta` | `fasta` (annotate with Prokka) or `gff` (use pre-annotated GFF3) |
+| `--outdir` | `results` | Directory for all published results |
 | `--pangenome` | `roary` | `roary` or `panaroo` |
 | `--core_threshold` | `0.95` | Fraction of genomes required for a family to be treated as core |
 | `--roary_identity` | `95` | Roary minimum BLASTP percentage identity |
@@ -209,6 +232,12 @@ results/
 | `--threads` | `4` | CPUs per computational process |
 | `--ufboot` | `1000` | IQ-TREE ultrafast-bootstrap replicates |
 | `--sh_alrt` | `1000` | IQ-TREE SH-aLRT replicates |
+
+`--ufboot` and `--sh_alrt` are floored at 1000 by design: support values from
+far fewer replicates are not stable enough to report alongside a published
+tree, so underpowered settings are rejected rather than silently accepted.
+There is currently no supported way to disable supports for a quick smoke
+test; use `-stub-run` for wiring checks instead.
 
 ## Scientific guardrails
 
@@ -220,11 +249,18 @@ Core-genome phylogeny is also not assumed to represent accessory-gene evolutiona
 
 ## Validation status
 
-The repository currently has three validation layers:
+The repository currently has four validation layers:
 
 1. **Python unit tests** for summary/report logic;
 2. **Nextflow stub-run tests** for the complete Roary and Panaroo DAGs;
-3. a tracked **real-data release gate** requiring end-to-end analysis of a small bacterial cohort before the first stable release.
+3. a **weekly real-data smoke test** running the genuine Roary route
+   (Prokka → Roary → IQ-TREE) on a tiny real *E. coli* subset
+   (`examples/smoke/`), guarding against conda-solve drift and tool breakage;
+4. a **real-data release gate**: end-to-end analysis of six RefSeq Complete
+   *E. coli* genomes, executed 2026-09-28/29 — both the Roary and Panaroo
+   routes completed, summary counts match native engine outputs exactly, and
+   the core-genome trees recover K-12 monophyly. Accession list and outcome
+   in `examples/real_data/`.
 
 See [Validation strategy](docs/10_validation.md) and the open release-gate issue in GitHub.
 
