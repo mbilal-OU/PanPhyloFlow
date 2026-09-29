@@ -1,0 +1,3 @@
+sample,gff
+Genome_A,tests/data/genome_a.gff
+Genome_B,tests/data/genome_b.gff

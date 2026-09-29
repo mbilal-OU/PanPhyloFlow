@@ -8,6 +8,8 @@ import html
 import shutil
 from pathlib import Path
 
+__version__ = "0.2.0"
+
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -16,17 +18,23 @@ def parse_args():
     p.add_argument("--engine", required=True)
     p.add_argument("--core-threshold", type=float, required=True)
     p.add_argument("--outdir", required=True)
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return p.parse_args()
 
 
 def read_summary(path: Path) -> dict[str, str]:
+    """Strictly parse a PanPhyloFlow summary.tsv; fail loudly on corruption."""
     result = {}
     lines = path.read_text().splitlines()
-    for line in lines[1:]:
+    if not lines or lines[0].strip() != "metric\tvalue":
+        raise ValueError(f"{path} is not a PanPhyloFlow summary.tsv (bad header)")
+    for lineno, line in enumerate(lines[1:], start=2):
         if not line.strip():
             continue
+        if "\t" not in line:
+            raise ValueError(f"{path}:{lineno}: malformed line, expected tab-separated 'metric' and 'value'")
         key, value = line.split("\t", 1)
-        result[key] = value
+        result[key.strip()] = value.strip()
     return result
 
 

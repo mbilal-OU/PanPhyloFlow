@@ -55,3 +55,7 @@ Stub mode replaces each heavy command with a minimal dummy command while preserv
 ## Recommended first real test
 
 Start with a small, taxonomically coherent set of well-assembled bacterial genomes. Run the default Roary route first, then run Panaroo on the same samples if you want an engine comparison. Confirm that annotation, pangenome construction, core alignment, phylogeny and report generation all complete before scaling to hundreds or thousands of genomes.
+
+Each run writes `provenance/provenance.yml` (pipeline and tool versions,
+parameters, run metadata) into the output directory — archive it with the
+results so the analysis remains traceable.

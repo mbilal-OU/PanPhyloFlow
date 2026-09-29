@@ -5,8 +5,11 @@ type: software
 authors:
   - family-names: "Bilal"
     given-names: "Muhammad"
-version: 0.1.0
-date-released: 2026-08-19
+# 0.2.0 is unreleased: the Roary-default behavior change after the 0.1.0
+# pre-release is recorded here so the citation metadata never silently
+# describes a different default engine than the code. date-released will be
+# set when 0.2.0 is tagged.
+version: 0.2.0
 license: MIT
 repository-code: "https://github.com/mbilal-OU/PanPhyloFlow"
 url: "https://mbilal-ou.github.io/PanPhyloFlow/"

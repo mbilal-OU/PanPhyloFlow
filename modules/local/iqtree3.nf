@@ -11,6 +11,7 @@ process IQTREE3 {
 
     output:
     path 'tree', emit: tree
+    path 'versions.yml', emit: versions
 
     script:
     """
@@ -35,6 +36,9 @@ process IQTREE3 {
         --alrt ${params.sh_alrt} \
         -T ${task.cpus} \
         --prefix tree/core_genome
+
+    iqtree_version=\$(iqtree3 --version 2>/dev/null | head -n 1 || echo "unknown")
+    printf '"IQTREE3":\n    iqtree: "%s"\n' "\${iqtree_version}" > versions.yml
     """
 
     stub:
@@ -42,5 +46,6 @@ process IQTREE3 {
     mkdir -p tree
     printf '(Genome_A:0.1,Genome_B:0.1);\n' > tree/core_genome.treefile
     touch tree/core_genome.iqtree tree/core_genome.log
+    printf '"IQTREE3":\n    iqtree: "stub"\n' > versions.yml
     """
 }

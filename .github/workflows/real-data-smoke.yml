@@ -1,0 +1,85 @@
+name: Weekly real-data smoke test
+
+# Runs the full pipeline on a tiny REAL dataset (first 200 kb of two RefSeq
+# E. coli genomes, examples/smoke/) with the real conda tool stack — Prokka,
+# Roary, IQ-TREE all execute. Catches conda-solve drift, tool breakage and
+# workflow regressions that -stub-run cannot see. This is a regression smoke
+# test, not biological validation (see docs/10_validation.md).
+#
+# NOTE: this workflow has not completed a full green run yet; its first
+# scheduled/manual run needs review before the results are trusted.
+
+on:
+  schedule:
+    # Monday 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v3
+
+      - name: Configure conda channels and pins
+        shell: bash -l {0}
+        run: |
+          # Flexible channel priority: the roary/panaroo specs do not solve
+          # under strict priority (conda-forge pruned old perl builds they pin).
+          # parallel pin: GNU parallel >=20260122 ships a broken --pipe mode
+          # that kills Prokka's blast annotation step; 20251122 is verified.
+          cat >> ~/.condarc <<'EOF'
+          channels:
+            - conda-forge
+            - bioconda
+          channel_priority: flexible
+          pinned_packages:
+            - parallel=20251122
+          EOF
+          micromamba config list
+
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v2
+        with:
+          # Pin to the documented minimum supported version: the strongest
+          # compatibility check is that the workflow runs on the oldest
+          # Nextflow it claims to support (see nextflow.config manifest).
+          version: '24.10.0'
+
+      - name: Run real-data smoke test (Roary route)
+        shell: bash -l {0}
+        run: |
+          nextflow run main.nf -profile conda \
+            -c .github/workflows/real-data-smoke.config \
+            --input examples/smoke/samples.csv \
+            --input_type fasta \
+            --pangenome roary \
+            --threads 2 \
+            --outdir smoke_results
+
+      - name: Assert smoke-test outputs
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          OUTDIR=smoke_results
+          # full output contract, same layout as the stub assertions
+          for f in \
+            01_annotation/MG1655.gff 01_annotation/W3110.gff \
+            02_pangenome/roary/gene_presence_absence.csv \
+            03_summary/summary.tsv 03_summary/gene_family_stats.tsv \
+            04_phylogeny/core.treefile \
+            05_report/index.html 05_report/summary.tsv \
+            provenance/provenance.yml \
+          ; do
+            [ -f "$OUTDIR/$f" ] || { echo "MISSING: $f"; exit 1; }
+          done
+          grep -q '^genomes[[:space:]]\+2$' "$OUTDIR/03_summary/summary.tsv"
+          grep -q '^engine[[:space:]]\+roary$' "$OUTDIR/03_summary/summary.tsv"
+          # core families must be a positive integer (real annotation ran)
+          core=$(grep -oP '^core_gene_families[[:space:]]+\K[0-9]+' "$OUTDIR/03_summary/summary.tsv")
+          [ "$core" -gt 0 ] || { echo "no core families found"; exit 1; }
+          echo "smoke test OK: $core core families, $(grep -c '' "$OUTDIR/04_phylogeny/core.treefile") tree line(s)"

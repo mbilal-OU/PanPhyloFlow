@@ -17,6 +17,7 @@ process BUILD_REPORT {
     path '*.tsv', emit: tables
     path '*.treefile', optional: true, emit: treefile
     path 'INTERPRETATION_NOTES.txt', emit: notes
+    path 'versions.yml', emit: versions
 
     script:
     """
@@ -26,15 +27,25 @@ process BUILD_REPORT {
         --engine "${engine}" \
         --core-threshold ${core_threshold} \
         --outdir .
+
+    script_version=\$(python ${projectDir}/bin/build_report.py --version 2>/dev/null || echo "unknown")
+    printf '"BUILD_REPORT":\n    build_report: "%s"\n' "\${script_version}" > versions.yml
     """
 
     stub:
+    // The stub still stages the declared inputs, so copy them through: this
+    // keeps the stub DAG honest about the SUMMARIZE -> BUILD_REPORT contract
+    // instead of fabricating disconnected outputs.
     """
     mkdir -p figures
-    printf '<!doctype html><html><body><h1>PanPhyloFlow stub report</h1></body></html>\n' > index.html
+    cp "${summary_dir}/summary.tsv" summary.tsv
+    cp "${summary_dir}/gene_frequency.tsv" gene_frequency.tsv
+    cp "${summary_dir}/core_threshold_scan.tsv" core_threshold_scan.tsv
+    cp "${summary_dir}/descriptive_accumulation.tsv" descriptive_accumulation.tsv
+    cp "${summary_dir}/INTERPRETATION_NOTES.txt" INTERPRETATION_NOTES.txt
     printf '(Genome_A:0.1,Genome_B:0.1);\n' > core_genome.treefile
-    touch summary.tsv gene_frequency.tsv core_threshold_scan.tsv descriptive_accumulation.tsv
-    touch INTERPRETATION_NOTES.txt
     touch figures/stub.png
+    printf '<!doctype html><html><body><h1>PanPhyloFlow stub report</h1></body></html>\n' > index.html
+    printf '"BUILD_REPORT":\n    build_report: "stub"\n' > versions.yml
     """
 }
